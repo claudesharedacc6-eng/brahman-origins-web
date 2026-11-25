@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play · Brahman Origins</title>
+  <link rel="icon" type="image/png" href="images/BRAHMMY.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="play" class="play-page">
+  <header class="play-bar">
+    <a class="brand" href="index.html">
+      <img class="brand-mark" src="images/BRAHMMY.png" alt="" width="34" height="34">
+      <span class="brand-text"><strong>Brahman Origins</strong><span>University of Batangas</span></span>
+    </a>
+    <div class="play-who" id="who-small"></div>
+    <div class="play-actions">
+      <button id="btn-fullscreen" type="button">Fullscreen</button>
+      <a href="index.html">Home</a>
+    </div>
+  </header>
+
+  <div class="stage">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="loader" class="loader">
+      <img src="images/BRAHMMY.png" alt="" width="120" height="120">
+      <h2>Brahman <span>Origins</span></h2>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <p id="loader-text">Loading the University of Batangas…</p>
+      <p class="loader-tip">First visit? The campuses take a few minutes to download. Next time it's much faster.</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

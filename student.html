@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Progress | Brahman Origins</title>
+  <meta name="description" content="Brahman Origins: the University of Batangas journey as an open-world web game. Sign in with UB Mail to play.">
+  <link rel="icon" type="image/png" href="images/BRAHMMY.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="student">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html">
+        <img class="brand-mark" src="images/BRAHMMY.png" alt="" width="42" height="42">
+        <span class="brand-text"><strong>Brahman Origins</strong><span>University of Batangas</span></span>
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="index.html#about">About</a></li>
+          <li><a href="guidelines.html">How to Play</a></li>
+          <li data-show="student"><a href="student.html" aria-current="page">My Progress</a></li>
+          <li data-show="admin"><a href="admin.html">Admin</a></li>
+          <li data-show="play"><a href="play.html" class="nav-play">Play</a></li>
+          <li data-show="anon"><a href="login.html" class="nav-login">Login</a></li>
+          <li data-show="user" class="nav-user">
+            <span class="nav-avatar" id="nav-avatar"></span>
+            <span class="nav-username" id="nav-username"></span>
+            <button type="button" class="nav-logout" data-logout>Logout</button>
+          </li>
+        </ul>
+      </nav>
+      <div class="nav-actions">
+        <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="student-canvas">
+    <section class="student-hero">
+      <div style="position:relative;z-index:1;">
+        <span class="status-pill-online"><span class="dot-live"></span> Signed in with UB Mail</span>
+        <h1>Welcome back, <span id="student-first-name">UBian</span>!</h1>
+        <p>Your journey picks up right where you left it.</p>
+      </div>
+      <div class="student-hero-actions">
+        <a href="play.html" class="btn btn-primary">Play the Game</a>
+        <a href="guidelines.html" class="btn btn-outline">How to Play</a>
+      </div>
+      <img src="images/BRAHMMY.png" alt="" class="student-hero-mascot">
+    </section>
+
+    <div class="dashboard-grid">
+      <div class="grid-column">
+        <div class="card-surface">
+          <div class="profile-line">
+            <div class="profile-avatar-lg js-initials">UB</div>
+            <div>
+              <span class="badge-level" id="student-course">UB Student</span>
+              <h2 class="profile-name" id="student-full-name">…</h2>
+              <p class="profile-email" id="student-email"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-surface">
+          <div class="card-header">
+            <h3 class="card-title">UB Lipa progress</h3>
+            <span class="badge-subtle">From the game</span>
+          </div>
+          <div id="lipa-progress"><p class="muted">Loading your progress…</p></div>
+        </div>
+      </div>
+
+      <div class="grid-column">
+        <div class="card-surface">
+          <div class="card-header">
+            <h3 class="card-title">UB Lipa leaderboard</h3>
+            <span class="badge-subtle">Top 10</span>
+          </div>
+          <ol class="lb-list" id="student-leaderboard"><li class="lb-empty">Loading…</li></ol>
+        </div>
+
+        <div class="card-surface">
+          <div class="card-header">
+            <h3 class="card-title">Need help?</h3>
+          </div>
+          <div class="help-actions">
+            <button type="button" class="btn btn-outline" data-open="modal-report">🐞 Report a bug or feedback</button>
+            <button type="button" class="btn btn-outline" data-open="modal-inquiry">✉️ Ask the school a question</button>
+          </div>
+          <h4 class="metric-label" style="margin:20px 0 10px;">My recent reports</h4>
+          <ul class="quest-list" id="my-tickets"><li class="muted small">Loading…</li></ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="modal-report" role="dialog" aria-modal="true" aria-labelledby="report-title" aria-hidden="true">
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close aria-label="Close">✕</button>
+      <h2 id="report-title">Report a bug or feedback</h2>
+      <p>Tell us what happened. The admin team sees every report.</p>
+      <form id="form-report" novalidate>
+        <div class="field"><label for="rep-tag">Type</label>
+          <select id="rep-tag"><option>Technical Issue</option><option>Gameplay Feedback</option></select></div>
+        <div class="field"><label for="rep-title">Short title</label>
+          <input id="rep-title" maxlength="120" placeholder="e.g. Stuck after the Grade 9 minigame" required></div>
+        <div class="field"><label for="rep-desc">What happened?</label>
+          <textarea id="rep-desc" maxlength="2000" placeholder="Which campus and level? What did you do just before?"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-block">Send report</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-inquiry" role="dialog" aria-modal="true" aria-labelledby="inquiry-title" aria-hidden="true">
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close aria-label="Close">✕</button>
+      <h2 id="inquiry-title">Ask a question</h2>
+      <p>Questions about the school or the game. We'll reply to your UB Mail.</p>
+      <form id="form-inquiry" novalidate>
+        <div class="field"><label for="inq-message">Your question</label>
+          <textarea id="inq-message" maxlength="2000" required></textarea></div>
+        <button type="submit" class="btn btn-primary btn-block">Send inquiry</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <img class="brand-mark" src="images/BRAHMMY.png" alt="" width="42" height="42">
+            <span class="brand-text"><strong>Brahman Origins</strong><span>University of Batangas</span></span>
+          </a>
+          <p>The player portal for the Brahman Origins Unity web game, an open-world capstone project inspired by the UB student journey.</p>
+        </div>
+        <div class="footer-col"><h4>Explore</h4><a href="index.html#about">About</a><a href="index.html#campuses">Campuses</a><a href="index.html#journey">The Journey</a></div>
+        <div class="footer-col"><h4>Play</h4><a href="play.html">Play the Game</a><a href="guidelines.html">How to Play</a><a href="index.html#leaderboard">Leaderboard</a></div>
+        <div class="footer-col"><h4>Account</h4><a href="login.html">Login</a><a href="student.html">My Progress</a><a href="https://ub.edu.ph" target="_blank" rel="noopener">University of Batangas</a></div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="year">2026</span> Brahman Origins. A capstone project for the University of Batangas.</span>
+        <span>Player Portal · v2</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

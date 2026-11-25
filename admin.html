@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Admin Console · Brahman Origins</title>
+  <link rel="icon" type="image/png" href="images/BRAHMMY.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="admin" class="bg-admin-dark is-guarded">
+  <div class="admin-layout">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <img src="images/BRAHMMY.png" alt="" width="34" height="34" style="width:34px;height:34px;flex-shrink:0;">
+        <span class="brand-title-admin">BRAHMAN ORIGINS</span>
+        <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Menu">Menu</button>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Admin navigation">
+        <div class="nav-group-label">Admin Console</div>
+        <button class="nav-item active" data-target="view-overview" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Overview
+        </button>
+        <button class="nav-item" data-target="view-students">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Students
+        </button>
+        <button class="nav-item" data-target="view-reports">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Game Reports <span class="nav-count" id="count-reports"></span>
+        </button>
+        <button class="nav-item" data-target="view-inquiries">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          School Inquiries <span class="nav-count" id="count-inquiries"></span>
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <a href="index.html">← View website</a>
+        <a href="play.html">▶ Test the game</a>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <div class="admin-main-container">
+      <header class="admin-header">
+        <div class="admin-header-status">
+          <span class="status-indicator-live" aria-hidden="true"></span>
+          Admin Console · Live
+        </div>
+        <div class="admin-header-actions">
+          <button type="button" class="admin-avatar" title="Account settings" aria-label="Account settings">AD</button>
+          <button type="button" class="btn-outline-dark-sm" data-logout>Logout</button>
+        </div>
+      </header>
+
+      <!-- VIEW 1 · OVERVIEW -->
+      <main class="admin-view-panel" id="view-overview">
+        <div class="view-header">
+          <h1 class="view-title">World Overview</h1>
+          <p class="view-description">Live numbers from the shared database: who signed up, how far they got, and what needs your attention.</p>
+        </div>
+
+        <div class="admin-metrics-row">
+          <div class="admin-card-surface metric-stat-card">
+            <span class="stat-label">Registered students</span>
+            <span class="stat-value" id="stat-players">–</span>
+            <span class="stat-sub">UB Mail <strong id="stat-ub">–</strong> · External <strong id="stat-external">–</strong></span>
+          </div>
+          <div class="admin-card-surface metric-stat-card">
+            <span class="stat-label">UB Lipa players</span>
+            <span class="stat-value" id="stat-lipa">–</span>
+            <span class="stat-sub">Started the Lipa campaign</span>
+          </div>
+          <div class="admin-card-surface metric-stat-card">
+            <span class="stat-label">Open reports</span>
+            <span class="stat-value" id="stat-reports">–</span>
+            <span class="stat-sub">Bugs and feedback</span>
+          </div>
+          <div class="admin-card-surface metric-stat-card">
+            <span class="stat-label">Open inquiries</span>
+            <span class="stat-value" id="stat-inquiries">–</span>
+            <span class="stat-sub">Questions from students</span>
+          </div>
+        </div>
+
+        <section class="admin-card-surface world-health-card">
+          <h2 class="card-subtitle">UB Lipa progress</h2>
+          <div id="lipa-health"><p class="muted">Loading…</p></div>
+        </section>
+      </main>
+
+      <!-- VIEW 2 · STUDENTS -->
+      <main class="admin-view-panel hidden" id="view-students">
+        <div class="view-header">
+          <h1 class="view-title">Student Directory</h1>
+          <p class="view-description">Everyone who signed in to play. Click a student for details and their UB Lipa progress.</p>
+        </div>
+        <div class="table-controls">
+          <div class="search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="student-search-input" placeholder="Search name or email…" class="input-dark" aria-label="Search students">
+          </div>
+          <label class="toggle-filter-label"><input type="checkbox" id="filter-non-ub-checkbox"><span>Show non-UB Mail only</span></label>
+        </div>
+        <div class="admin-card-surface table-wrapper">
+          <table class="admin-table" aria-label="Student directory">
+            <thead><tr><th scope="col">Player</th><th scope="col">Email</th><th scope="col">UB Lipa level</th><th scope="col">Status</th><th scope="col" class="text-right">Action</th></tr></thead>
+            <tbody id="student-table-body"><tr><td colspan="5" class="table-msg">Loading students…</td></tr></tbody>
+          </table>
+          <div class="table-pagination">
+            <div class="pagination-info" id="pagination-info"></div>
+            <div class="pagination-controls">
+              <button type="button" class="btn-pagination-nav" id="btn-prev-page">« Prev</button>
+              <span class="page-indicator" id="page-indicator"></span>
+              <button type="button" class="btn-pagination-nav" id="btn-next-page">Next »</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- VIEW 3 · REPORTS -->
+      <main class="admin-view-panel hidden" id="view-reports">
+        <div class="view-header">
+          <h1 class="view-title">Game Reports</h1>
+          <p class="view-description">Open bug reports and gameplay feedback sent by players from My Progress.</p>
+        </div>
+        <div class="reports-feed" id="reports-feed"></div>
+      </main>
+
+      <!-- VIEW 4 · INQUIRIES -->
+      <main class="admin-view-panel hidden" id="view-inquiries">
+        <div class="view-header">
+          <h1 class="view-title">School Inquiries</h1>
+          <p class="view-description">Questions sent by students. Reply to them by email, then mark them resolved.</p>
+        </div>
+        <div class="reports-feed" id="inquiries-feed"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL: ACCOUNT SETTINGS -->
+  <div class="modal" id="modal-admin-settings" role="dialog" aria-modal="true" aria-labelledby="admin-settings-title" aria-hidden="true">
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close aria-label="Close">✕</button>
+      <h2 id="admin-settings-title">Admin account</h2>
+      <p>Change the password of the account you're signed in with.</p>
+      <div class="detail-box">
+        <span class="metric-label">Signed in as</span>
+        <div id="admin-email-display" style="font-weight:700;"></div>
+      </div>
+      <form id="form-change-password" novalidate>
+        <div class="field"><label for="admin-current-password">Current password</label><input type="password" id="admin-current-password" autocomplete="current-password"></div>
+        <div class="field"><label for="admin-new-password">New password (10+ characters)</label><input type="password" id="admin-new-password" autocomplete="new-password"></div>
+        <div class="field"><label for="admin-confirm-password">Confirm new password</label><input type="password" id="admin-confirm-password" autocomplete="new-password"></div>
+        <button type="submit" class="btn btn-primary btn-block">Update password</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: STUDENT DETAILS -->
+  <div class="modal" id="modal-student-details" role="dialog" aria-modal="true" aria-labelledby="detail-name" aria-hidden="true">
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close aria-label="Close">✕</button>
+      <div class="profile-line" style="margin-bottom:18px;">
+        <div class="profile-avatar-lg" id="detail-avatar">UB</div>
+        <div>
+          <h2 id="detail-name" style="margin:0;">Student</h2>
+          <div class="muted small" id="detail-email"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <span class="badge-course" id="detail-course"></span>
+            <span class="status-pill status-active" id="detail-status-badge">Active</span>
+          </div>
+        </div>
+      </div>
+      <div class="detail-box">
+        <span class="metric-label">UB Lipa (from the game)</span>
+        <div class="detail-grid cols-3">
+          <div><span>Level</span><strong id="detail-lipa-level">–</strong></div>
+          <div><span>XP</span><strong id="detail-lipa-xp">–</strong></div>
+          <div><span>Last played</span><strong id="detail-lipa-seen">–</strong></div>
+        </div>
+      </div>
+      <div class="detail-box" style="background:var(--bg-light-gray);border-color:var(--border-color);">
+        <span class="metric-label">Player record</span>
+        <div class="detail-grid" style="border-top-color:var(--border-color);">
+          <div><span>Level</span><strong id="detail-level">–</strong></div>
+          <div><span>Total XP</span><strong id="detail-xp">–</strong></div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary btn-block" data-close>Close</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
