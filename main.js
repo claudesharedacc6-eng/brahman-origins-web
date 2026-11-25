@@ -9,8 +9,9 @@
      profiles      id (= login id), role ('student' | 'admin'), display_name
      players       one row per student: user_id, name, email, course, level, xp_total ...
      tickets       bug reports, feedback and inquiries (tag = 'Inquiry')
-     lipa_progress UB Lipa game progress, written by the Unity game
-     lipa_leaderboard(max_rows)  read-only ranking function (names + points only)
+     Campus progress + leaderboards: one entry per campus in config.js (CAMPUSES).
+       UB Lipa: lipa_progress (written by the game) and lipa_leaderboard(max_rows).
+       Other campuses show "Coming soon" until their group adds a leaderboard / progress.
 
    No passwords or secret keys belong in this file: it is public on GitHub.
    ========================================================================== */
@@ -135,6 +136,59 @@
   }
 
   /* ------------------------------------------------------------------------
+     CAMPUSES: the four UB campuses, from config.js
+     ------------------------------------------------------------------------ */
+  const CAMPUSES = (cfg.CAMPUSES && cfg.CAMPUSES.length) ? cfg.CAMPUSES : [
+    { key: "elementary", name: "UB Elementary", leaderboard: "", progress: "" },
+    { key: "main", name: "UB Main", leaderboard: "", progress: "" },
+    { key: "millennium", name: "UB Millennium", leaderboard: "", progress: "" },
+    { key: "lipa", name: "UB Lipa", leaderboard: "lipa_leaderboard", progress: "lipa" }
+  ];
+
+  // How the website reads each campus's game progress. Add one entry per campus as groups connect theirs.
+  const PROGRESS_SOURCES = {
+    lipa: {
+      async loadMine(userId) {
+        const { data } = await sb.from("lipa_progress").select("*").eq("user_id", userId).maybeSingle();
+        return data;
+      },
+      async loadAll() {
+        return sb.from("lipa_progress").select("user_id,player_name,current_chapter,xp_total,updated_at");
+      },
+      level: (row) => lipaLevel(row.current_chapter),
+      stage: (row) => lipaStage(row.current_chapter),
+      graduated: (row) => (Number(row.current_chapter) || 1) >= 11,
+      renderMine: renderLipaProgress
+    }
+  };
+  const sourceFor = (campus) => (campus && campus.progress && PROGRESS_SOURCES[campus.progress]) || null;
+
+  // A row of campus tabs. onSelect(campus) runs on click and once for the first tab shown.
+  function campusTabs(container, onSelect, startKey) {
+    if (!container) return;
+    container.innerHTML = CAMPUSES.map((c) =>
+      `<button type="button" class="campus-tab" role="tab" data-campus="${esc(c.key)}">${esc(c.name)}</button>`).join("");
+    const select = (key) => {
+      const campus = CAMPUSES.find((c) => c.key === key) || CAMPUSES[0];
+      $$(".campus-tab", container).forEach((b) => {
+        const on = b.getAttribute("data-campus") === campus.key;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", String(on));
+      });
+      onSelect(campus);
+    };
+    container.addEventListener("click", (e) => {
+      const b = e.target.closest(".campus-tab");
+      if (b) select(b.getAttribute("data-campus"));
+    });
+    select(startKey || (CAMPUSES.find((c) => c.leaderboard || c.progress) || CAMPUSES[0]).key);
+  }
+
+  function comingSoon(campus, what) {
+    return `<div class="coming-soon"><strong>${esc(campus.name)}</strong><span>${esc(what)} coming soon.</span></div>`;
+  }
+
+  /* ------------------------------------------------------------------------
      WHO IS HERE?  (student, admin, guest or nobody)
      ------------------------------------------------------------------------ */
   let statePromise = null;
@@ -232,13 +286,15 @@
   /* ------------------------------------------------------------------------
      LEADERBOARD (home + student pages): read-only, names and points only
      ------------------------------------------------------------------------ */
-  async function renderLeaderboard(listEl, maxRows, highlightName) {
+  async function renderLeaderboard(listEl, campus, maxRows, highlightName) {
     if (!listEl) return;
+    if (!campus.leaderboard) { listEl.innerHTML = `<li class="lb-empty">The ${esc(campus.name)} leaderboard is coming soon.</li>`; return; }
     if (!sb) { listEl.innerHTML = '<li class="lb-empty">Leaderboard unavailable.</li>'; return; }
-    const { data, error } = await sb.rpc("lipa_leaderboard", { max_rows: maxRows });
+    listEl.innerHTML = '<li class="lb-empty">Loading…</li>';
+    const { data, error } = await sb.rpc(campus.leaderboard, { max_rows: maxRows });
     if (error) { listEl.innerHTML = '<li class="lb-empty">Leaderboard unavailable right now.</li>'; return; }
     if (!data || !data.length) {
-      listEl.innerHTML = '<li class="lb-empty">No scores yet. Be the first Brahman on the board!</li>';
+      listEl.innerHTML = `<li class="lb-empty">No scores at ${esc(campus.name)} yet. Be the first Brahman on the board!</li>`;
       return;
     }
     listEl.innerHTML = data.map((r) => {
@@ -287,7 +343,7 @@
         : `Welcome back, ${state.isAdmin ? "" : "UBian "}${(state.name || "").split(" ")[0]}! 👋`;
       welcome.hidden = false;
     }
-    renderLeaderboard($("#home-leaderboard"), 5);
+    campusTabs($("#home-board-tabs"), (campus) => renderLeaderboard($("#home-leaderboard"), campus, 5));
   }
 
   /* ------------------------------------------------------------------------
@@ -384,6 +440,38 @@
     }
   }
 
+  // UB Lipa: Grade 7 to 4th Year College, 10 minigames.
+  function renderLipaProgress(lipa, campus) {
+    if (!lipa) {
+      return `<p class="muted">You haven't started ${esc(campus.name)} yet. Press <strong>Play the Game</strong>, choose ${esc(campus.name)} in Campus Selection, and talk to Brahmmy at the main gate.</p>`;
+    }
+    const chapter = Number(lipa.current_chapter) || 1;
+    const done = Math.min(10, Math.max(0, chapter - 1));
+    const pct = Math.round((done / 10) * 100);
+    const character = lipa.character_number === 1 ? "Boy" : lipa.character_number === 2 ? "Girl" : "Not chosen yet";
+    const order = ["Junior High", "Senior High", "College", "Graduated"];
+    const cur = order.indexOf(lipaStage(chapter));
+    return `
+      <div class="progress-head">
+        <div>
+          <span class="metric-label">Current level</span>
+          <strong class="progress-level">${esc(lipaLevel(chapter))}</strong>
+          <span class="stage-pill">${esc(lipaStage(chapter))}</span>
+        </div>
+        <div class="text-right">
+          <span class="metric-label">XP</span>
+          <strong class="progress-level">${Number(lipa.xp_total || 0).toLocaleString()}</strong>
+        </div>
+      </div>
+      <div class="xp-labels"><span class="xp-title">Minigames completed</span><span class="xp-value">${done} / 10</span></div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      <ul class="stage-track">
+        ${order.map((st, idx) => `<li class="${idx < cur ? "done" : idx === cur ? "current" : ""}">${st}</li>`).join("")}
+      </ul>
+      <p class="muted small">Character: ${esc(character)} · Last played ${esc(timeSince(lipa.updated_at))}</p>
+      ${chapter >= 11 ? '<div class="award-banner">🏅 Loyalty Award earned. Congratulations, Brahman!</div>' : ""}`;
+  }
+
   /* ------------------------------------------------------------------------
      PAGE: STUDENT (My Progress)
      ------------------------------------------------------------------------ */
@@ -402,51 +490,31 @@
     set("student-course", (player && player.course) || "UB Student");
     $$(".js-initials").forEach((el) => { el.textContent = initialsOf(fullName); });
 
-    // UB Lipa progress (written by the game).
-    let lipa = null;
-    try {
-      const { data } = await sb.from("lipa_progress").select("*").eq("user_id", user.id).maybeSingle();
-      lipa = data;
-    } catch (e) { /* table missing */ }
-
-    const lipaCard = $("#lipa-progress");
-    if (lipaCard) {
-      if (!lipa) {
-        lipaCard.innerHTML = `
-          <p class="muted">You haven't started UB Lipa yet. Press <strong>Play the Game</strong>, choose UB Lipa in Campus Selection, and talk to Brahmmy at the main gate.</p>`;
-      } else {
-        const chapter = Number(lipa.current_chapter) || 1;
-        const done = Math.min(10, Math.max(0, chapter - 1));
-        const pct = Math.round((done / 10) * 100);
-        const character = lipa.character_number === 1 ? "Boy" : lipa.character_number === 2 ? "Girl" : "Not chosen yet";
-        lipaCard.innerHTML = `
-          <div class="progress-head">
-            <div>
-              <span class="metric-label">Current level</span>
-              <strong class="progress-level">${esc(lipaLevel(chapter))}</strong>
-              <span class="stage-pill">${esc(lipaStage(chapter))}</span>
-            </div>
-            <div class="text-right">
-              <span class="metric-label">UB Lipa XP</span>
-              <strong class="progress-level">${Number(lipa.xp_total || 0).toLocaleString()}</strong>
-            </div>
-          </div>
-          <div class="xp-labels"><span class="xp-title">Minigames completed</span><span class="xp-value">${done} / 10</span></div>
-          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-          <ul class="stage-track">
-            ${["Junior High", "Senior High", "College", "Graduated"].map((s) => {
-              const order = ["Junior High", "Senior High", "College", "Graduated"];
-              const cur = order.indexOf(lipaStage(chapter));
-              const idx = order.indexOf(s);
-              return `<li class="${idx < cur ? "done" : idx === cur ? "current" : ""}">${s}</li>`;
-            }).join("")}
-          </ul>
-          <p class="muted small">Character: ${esc(character)} · Last played ${esc(timeSince(lipa.updated_at))}</p>
-          ${chapter >= 11 ? '<div class="award-banner">🏅 Loyalty Award earned. Congratulations, Brahman!</div>' : ""}`;
-      }
+    // Game progress for every campus that's connected (UB Lipa today).
+    const mine = {};
+    for (const campus of CAMPUSES) {
+      const src = sourceFor(campus);
+      if (!src) continue;
+      try { mine[campus.key] = await src.loadMine(user.id); } catch (e) { mine[campus.key] = null; }
     }
 
-    renderLeaderboard($("#student-leaderboard"), 10, lipa ? lipa.player_name : null);
+    // Start on a campus where this student has progress, otherwise the first connected one.
+    const started = CAMPUSES.find((c) => mine[c.key]);
+    const startKey = started ? started.key : null;
+
+    campusTabs($("#progress-tabs"), (campus) => {
+      const box = $("#campus-progress");
+      if (!box) return;
+      const src = sourceFor(campus);
+      if (!src) { box.innerHTML = comingSoon(campus, "Progress for this campus is"); return; }
+      box.innerHTML = src.renderMine(mine[campus.key], campus);
+    }, startKey);
+
+    campusTabs($("#student-board-tabs"), (campus) => {
+      const row = mine[campus.key];
+      renderLeaderboard($("#student-leaderboard"), campus, 10, row ? row.player_name : null);
+    }, startKey);
+
     loadMyTickets(player);
     initReportForms(state, player);
   }
@@ -597,7 +665,8 @@
   /* ------------------------------------------------------------------------
      PAGE: ADMIN CONSOLE
      ------------------------------------------------------------------------ */
-  const admin = { players: [], page: 1, perPage: 10, lipaByUser: {} };
+  // progress[campusKey] = { rows, byUser, error } for every campus that's connected.
+  const admin = { players: [], page: 1, perPage: 10, progress: {} };
 
   async function initAdmin(state) {
     if (!state.isAdmin) { window.location.replace(state.session ? "index.html" : "login.html?next=admin.html"); return; }
@@ -648,9 +717,10 @@
     $("#reports-feed").addEventListener("click", onTicketAction);
     $("#inquiries-feed").addEventListener("click", onTicketAction);
 
-    await Promise.all([loadPlayers(), loadLipa(), loadTickets()]);
-    renderStudents(); // again, now that UB Lipa levels are loaded
+    await Promise.all([loadPlayers(), loadCampusProgress(), loadTickets()]);
+    renderStudents(); // again, now that campus progress is loaded
     renderOverview();
+    campusTabs($("#admin-progress-tabs"), renderCampusHealth);
   }
 
   async function loadPlayers() {
@@ -663,12 +733,22 @@
     renderStudents();
   }
 
-  async function loadLipa() {
-    const { data, error } = await sb.from("lipa_progress").select("user_id,player_name,current_chapter,xp_total,updated_at");
-    admin.lipaError = !!error;
-    admin.lipa = data || [];
-    admin.lipaByUser = {};
-    admin.lipa.forEach((r) => { admin.lipaByUser[r.user_id] = r; });
+  async function loadCampusProgress() {
+    for (const campus of CAMPUSES) {
+      const src = sourceFor(campus);
+      if (!src) continue;
+      let rows = [], error = null;
+      try { const res = await src.loadAll(); rows = res.data || []; error = res.error; } catch (e) { error = e; }
+      const byUser = {};
+      rows.forEach((r) => { byUser[r.user_id] = r; });
+      admin.progress[campus.key] = { rows, byUser, error };
+    }
+  }
+
+  // This student's row for a campus, or null.
+  function progressOf(campus, userId) {
+    const p = admin.progress[campus.key];
+    return p && p.byUser[userId] ? p.byUser[userId] : null;
   }
 
   function filteredPlayers() {
@@ -702,14 +782,17 @@
     }
     body.innerHTML = rows.map((p) => {
       const ub = isUbMail(p.email);
-      const lipa = admin.lipaByUser[p.user_id];
+      const badges = CAMPUSES.map((c) => {
+        const row = progressOf(c, p.user_id);
+        return row ? `<span class="badge-course">${esc(c.name)} · ${esc(sourceFor(c).level(row))}</span>` : "";
+      }).join(" ");
       return `
         <tr data-player="${esc(p.id)}" class="row-click">
           <td><div class="player-col"><div class="avatar-sm-gold${ub ? "" : " avatar-dark-accent"}">${esc(initialsOf(p.name))}</div>
             <span class="player-name">${esc(p.name || p.username || "—")}</span></div></td>
           <td><div class="email-col"><span class="email-text">${esc(p.email || "—")}</span>
             ${ub ? '<span class="badge-verified-ub">UB Mail</span>' : '<span class="badge-warning-ext">External</span>'}</div></td>
-          <td>${lipa ? `<span class="badge-course">${esc(lipaLevel(lipa.current_chapter))}</span>` : '<span class="muted small">Not started</span>'}</td>
+          <td><div class="badge-stack">${badges || '<span class="muted small">Not started</span>'}</div></td>
           <td><span class="status-dot ${p.active === false ? "inactive" : "active"}" aria-hidden="true"></span>${p.active === false ? "Inactive" : "Active"}</td>
           <td class="text-right"><a href="#" class="link-action">View details →</a></td>
         </tr>`;
@@ -724,10 +807,17 @@
     set("detail-course", p.course || "No course set");
     set("detail-status-badge", p.active === false ? "Inactive" : "Active");
     $("#detail-status-badge").className = "status-pill " + (p.active === false ? "status-muted" : "status-active");
-    const lipa = admin.lipaByUser[p.user_id];
-    set("detail-lipa-level", lipa ? lipaLevel(lipa.current_chapter) : "Not started");
-    set("detail-lipa-xp", lipa ? Number(lipa.xp_total || 0).toLocaleString() : "0");
-    set("detail-lipa-seen", lipa ? timeSince(lipa.updated_at) : "—");
+    const list = $("#detail-campus-progress");
+    if (list) {
+      list.innerHTML = CAMPUSES.map((c) => {
+        const src = sourceFor(c);
+        const row = src ? progressOf(c, p.user_id) : null;
+        const value = !src ? '<span class="muted">Coming soon</span>'
+          : !row ? '<span class="muted">Not started</span>'
+          : `<strong>${esc(src.level(row))}</strong> · ${Number(row.xp_total || 0).toLocaleString()} XP · ${esc(timeSince(row.updated_at))}`;
+        return `<li><span>${esc(c.name)}</span><span>${value}</span></li>`;
+      }).join("");
+    }
     set("detail-level", p.level != null ? p.level : 1);
     set("detail-xp", Number(p.xp_total || 0).toLocaleString());
     openModal("modal-student-details");
@@ -809,28 +899,48 @@
     set("stat-reports", openReports.toLocaleString());
     set("stat-inquiries", openInq.toLocaleString());
 
-    const box = $("#lipa-health");
+    // Players with progress on at least one connected campus.
+    const withProgress = new Set();
+    const parts = [];
+    CAMPUSES.forEach((c) => {
+      const prog = admin.progress[c.key];
+      if (!prog) return;
+      prog.rows.forEach((r) => withProgress.add(r.user_id));
+      parts.push(`${c.name} ${prog.rows.length}`);
+    });
+    set("stat-campus", withProgress.size.toLocaleString());
+    set("stat-campus-sub", parts.length ? parts.join(" · ") : "No campus connected yet");
+  }
+
+  // The "Campus progress" card: one tab per campus.
+  function renderCampusHealth(campus) {
+    const box = $("#campus-health");
     if (!box) return;
-    if (admin.lipaError) {
-      box.innerHTML = '<p class="muted">Run <code>sql/portal_security_fixes.sql</code> in Supabase so admins can see UB Lipa progress here.</p>';
+    const src = sourceFor(campus);
+    const prog = admin.progress[campus.key];
+    if (!src || !prog) { box.innerHTML = comingSoon(campus, "Progress for this campus is"); return; }
+    if (prog.error) {
+      box.innerHTML = `<p class="muted">Couldn't read ${esc(campus.name)} progress. Run <code>sql/portal_security_fixes.sql</code> in Supabase so admins can see it.</p>`;
       return;
     }
-    const lipa = admin.lipa || [];
-    const total = lipa.length;
-    const by = { "Junior High": 0, "Senior High": 0, "College": 0, "Graduated": 0 };
-    lipa.forEach((r) => { by[lipaStage(r.current_chapter)]++; });
-    const avgXp = total ? Math.round(lipa.reduce((s, r) => s + (Number(r.xp_total) || 0), 0) / total) : 0;
-    set("stat-lipa", total.toLocaleString());
+    const rows = prog.rows;
+    const total = rows.length;
+    const by = {};
+    rows.forEach((r) => { const k = src.stage(r); by[k] = (by[k] || 0) + 1; });
+    const graduates = rows.filter((r) => src.graduated(r)).length;
+    const avgXp = total ? Math.round(rows.reduce((sum, r) => sum + (Number(r.xp_total) || 0), 0) / total) : 0;
+    const stages = campus.progress === "lipa" ? ["Junior High", "Senior High", "College", "Graduated"] : Object.keys(by);
     box.innerHTML = `
       <div class="health-summary">
         <div><strong>${total.toLocaleString()}</strong><span>players started</span></div>
-        <div><strong>${by.Graduated.toLocaleString()}</strong><span>Loyalty Awards</span></div>
+        <div><strong>${graduates.toLocaleString()}</strong><span>Loyalty Awards</span></div>
         <div><strong>${avgXp.toLocaleString()}</strong><span>average XP</span></div>
       </div>
-      ${Object.keys(by).map((k) => {
-        const pct = total ? Math.round((by[k] / total) * 100) : 0;
+      ${stages.map((k) => {
+        const n = by[k] || 0;
+        const pct = total ? Math.round((n / total) * 100) : 0;
         return `<div class="health-item">
-          <div class="health-meta"><span>${k}</span><span class="font-display">${by[k]} · ${pct}%</span></div>
+          <div class="health-meta"><span>${esc(k)}</span><span class="font-display">${n} · ${pct}%</span></div>
           <div class="bar-track-dark"><div class="bar-fill-gold" style="width:${pct}%"></div></div>
         </div>`;
       }).join("")}`;

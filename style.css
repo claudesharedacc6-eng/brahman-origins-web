@@ -3091,3 +3091,29 @@ ol.lb-list { list-style: none; margin: 0; padding: 0; }
   .hero-meta { flex-wrap: wrap; }
   .detail-grid.cols-3 { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---------- Campus tabs (leaderboards and progress for all 4 campuses) ---------- */
+.campus-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.campus-tab {
+  padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-color);
+  background: var(--bg-white); color: var(--text-secondary); font-size: .8rem; font-weight: 700;
+  cursor: pointer; transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+.campus-tab:hover { border-color: var(--maroon-primary); color: var(--maroon-primary); }
+.campus-tab.active { background: var(--maroon-primary); border-color: var(--maroon-primary); color: #fff; }
+.coming-soon {
+  display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center;
+  padding: 22px 16px; border: 1px dashed var(--border-color); border-radius: var(--radius-sm);
+  background: var(--bg-light-gray);
+}
+.coming-soon strong { font-family: var(--font-display); color: var(--maroon-primary); font-size: 1.05rem; }
+.coming-soon span { font-size: .88rem; color: var(--text-muted); }
+.badge-stack { display: flex; flex-wrap: wrap; gap: 4px; }
+.campus-progress-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.campus-progress-list li {
+  display: flex; justify-content: space-between; gap: 12px; font-size: .88rem;
+  padding-top: 8px; border-top: 1px solid rgba(212,175,55,.45);
+}
+.campus-progress-list li:first-child { border-top: 0; padding-top: 0; }
+.campus-progress-list li > span:first-child { font-weight: 700; color: var(--text-primary); }
+.campus-progress-list strong { color: var(--maroon-primary); }

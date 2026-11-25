@@ -65,7 +65,7 @@
       <main class="admin-view-panel" id="view-overview">
         <div class="view-header">
           <h1 class="view-title">World Overview</h1>
-          <p class="view-description">Live numbers from the shared database: who signed up, how far they got, and what needs your attention.</p>
+          <p class="view-description">Live numbers from the shared database for all four campuses: who signed up, how far they got, and what needs your attention.</p>
         </div>
 
         <div class="admin-metrics-row">
@@ -75,9 +75,9 @@
             <span class="stat-sub">UB Mail <strong id="stat-ub">–</strong> · External <strong id="stat-external">–</strong></span>
           </div>
           <div class="admin-card-surface metric-stat-card">
-            <span class="stat-label">UB Lipa players</span>
-            <span class="stat-value" id="stat-lipa">–</span>
-            <span class="stat-sub">Started the Lipa campaign</span>
+            <span class="stat-label">Players with progress</span>
+            <span class="stat-value" id="stat-campus">–</span>
+            <span class="stat-sub" id="stat-campus-sub">Across all campuses</span>
           </div>
           <div class="admin-card-surface metric-stat-card">
             <span class="stat-label">Open reports</span>
@@ -92,8 +92,9 @@
         </div>
 
         <section class="admin-card-surface world-health-card">
-          <h2 class="card-subtitle">UB Lipa progress</h2>
-          <div id="lipa-health"><p class="muted">Loading…</p></div>
+          <h2 class="card-subtitle">Campus progress</h2>
+          <div class="campus-tabs" id="admin-progress-tabs" role="tablist" aria-label="Campus progress"></div>
+          <div id="campus-health"><p class="muted">Loading…</p></div>
         </section>
       </main>
 
@@ -101,7 +102,7 @@
       <main class="admin-view-panel hidden" id="view-students">
         <div class="view-header">
           <h1 class="view-title">Student Directory</h1>
-          <p class="view-description">Everyone who signed in to play. Click a student for details and their UB Lipa progress.</p>
+          <p class="view-description">Everyone who signed in to play. Click a student for details and their progress on each campus.</p>
         </div>
         <div class="table-controls">
           <div class="search-box">
@@ -112,7 +113,7 @@
         </div>
         <div class="admin-card-surface table-wrapper">
           <table class="admin-table" aria-label="Student directory">
-            <thead><tr><th scope="col">Player</th><th scope="col">Email</th><th scope="col">UB Lipa level</th><th scope="col">Status</th><th scope="col" class="text-right">Action</th></tr></thead>
+            <thead><tr><th scope="col">Player</th><th scope="col">Email</th><th scope="col">Campus progress</th><th scope="col">Status</th><th scope="col" class="text-right">Action</th></tr></thead>
             <tbody id="student-table-body"><tr><td colspan="5" class="table-msg">Loading students…</td></tr></tbody>
           </table>
           <div class="table-pagination">
@@ -181,12 +182,8 @@
         </div>
       </div>
       <div class="detail-box">
-        <span class="metric-label">UB Lipa (from the game)</span>
-        <div class="detail-grid cols-3">
-          <div><span>Level</span><strong id="detail-lipa-level">–</strong></div>
-          <div><span>XP</span><strong id="detail-lipa-xp">–</strong></div>
-          <div><span>Last played</span><strong id="detail-lipa-seen">–</strong></div>
-        </div>
+        <span class="metric-label">Campus progress (from the game)</span>
+        <ul class="campus-progress-list" id="detail-campus-progress"></ul>
       </div>
       <div class="detail-box" style="background:var(--bg-light-gray);border-color:var(--border-color);">
         <span class="metric-label">Player record</span>
