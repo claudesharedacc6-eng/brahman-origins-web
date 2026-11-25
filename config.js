@@ -13,8 +13,8 @@ window.BO_CONFIG = {
 
   // ---- The Unity web game (files on Cloudflare R2) ----
   // Copy these from your old config.js. Same address you open to see Web.loader.js, without the file name.
-  BUILD_FOLDER: "https://pub-8671de01dfe24b1b9aabc7198ad94c85.r2.dev/Build",
-  STREAMING_ASSETS: "https://pub-8671de01dfe24b1b9aabc7198ad94c85.r2.dev/StreamingAssets",
+  BUILD_FOLDER: "https://game.brahmanorigins.com/Build",
+  STREAMING_ASSETS: "https://game.brahmanorigins.com/StreamingAssets",
   BUILD_NAME: "Web",          // Web.loader.js, Web.data.unityweb, ...
   BUILD_EXT: ".unityweb",     // Gzip + Decompression Fallback. Compression Disabled = ""
 
