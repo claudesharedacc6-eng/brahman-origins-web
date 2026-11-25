@@ -22,5 +22,5 @@ window.BO_CONFIG = {
   COMPANY_NAME: "DefaultCompany",
   PRODUCT_NAME: "Brahman Origins",
   // Raise this (1.1, 1.2, ...) every time you upload a new build, so players get the new one.
-  PRODUCT_VERSION: "1.0"
+  PRODUCT_VERSION: "1.1"
 };
