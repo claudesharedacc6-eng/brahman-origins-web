@@ -7,7 +7,7 @@
 
    Database tables used (the shared Supabase project):
      profiles      id (= login id), role ('student' | 'admin'), display_name
-     players       one row per student: user_id, name, email, course, level, xp_total ...
+     portal_students()  admin-only list of everyone who signed in (from the logins themselves)
      tickets       bug reports, feedback and inquiries (tag = 'Inquiry')
      Campus progress + leaderboards: one entry per campus in config.js (CAMPUSES).
        UB Lipa: lipa_progress (written by the game) and lipa_leaderboard(max_rows).
@@ -234,20 +234,6 @@
     window.location.href = target || "login.html";
   }
 
-  // Make sure a signed-in student appears in the Student Directory (players table).
-  async function ensurePlayerRow(user) {
-    if (!sb || !user) return null;
-    try {
-      const { data: existing } = await sb.from("players").select("*").eq("user_id", user.id).limit(1);
-      if (existing && existing.length) return existing[0];
-      const { data: created, error } = await sb.from("players")
-        .insert({ user_id: user.id, name: displayName(user), email: user.email })
-        .select().limit(1);
-      if (error) { console.warn("players insert:", error.message); return null; }
-      return created && created[0];
-    } catch (e) { return null; }
-  }
-
   /* ------------------------------------------------------------------------
      HEADER NAV (every page with the public header)
      ------------------------------------------------------------------------ */
@@ -352,7 +338,6 @@
   async function routeSignedIn(state) {
     if (state.isAdmin) { window.location.replace(nextParam("admin.html")); return true; }
     if (state.isStudent) {
-      await ensurePlayerRow(state.user);
       window.location.replace(nextParam("student.html"));
       return true;
     }
@@ -481,13 +466,11 @@
 
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     const user = state.user;
-    const player = await ensurePlayerRow(user);
-
-    const fullName = (player && player.name) || state.name;
+    const fullName = state.name;
     set("student-first-name", fullName.split(" ")[0]);
     set("student-full-name", fullName);
     set("student-email", state.email);
-    set("student-course", (player && player.course) || "UB Student");
+    set("student-course", "UB Student");
     $$(".js-initials").forEach((el) => { el.textContent = initialsOf(fullName); });
 
     // Game progress for every campus that's connected (UB Lipa today).
@@ -515,15 +498,16 @@
       renderLeaderboard($("#student-leaderboard"), campus, 10, row ? row.player_name : null);
     }, startKey);
 
-    loadMyTickets(player);
-    initReportForms(state, player);
+    loadMyTickets(user.id);
+    initReportForms(state);
   }
 
-  async function loadMyTickets(player) {
+  // Reports are linked to the login (tickets.user_id, filled in by Supabase).
+  async function loadMyTickets(userId) {
     const list = $("#my-tickets");
-    if (!list || !sb || !player) { if (list) list.innerHTML = '<li class="muted small">No reports yet.</li>'; return; }
+    if (!list || !sb || !userId) { if (list) list.innerHTML = '<li class="muted small">No reports yet.</li>'; return; }
     const { data, error } = await sb.from("tickets").select("id,title,tag,status,created_at")
-      .eq("player_id", player.id).order("created_at", { ascending: false }).limit(6);
+      .eq("user_id", userId).order("created_at", { ascending: false }).limit(6);
     if (error || !data || !data.length) { list.innerHTML = '<li class="muted small">No reports yet.</li>'; return; }
     list.innerHTML = data.map((t) => `
       <li class="quest-item">
@@ -535,8 +519,8 @@
       </li>`).join("");
   }
 
-  function initReportForms(state, player) {
-    const base = { player_id: player ? player.id : null, user_name: (player && player.name) || state.name, status: "open" };
+  function initReportForms(state) {
+    const base = { user_name: state.name, status: "open" }; // user_id is filled in by Supabase
 
     const report = $("#form-report");
     if (report) {
@@ -554,7 +538,7 @@
         report.reset();
         closeModal($("#modal-report"));
         showToast("Report sent! The team will review it.");
-        loadMyTickets(player);
+        loadMyTickets(state.user.id);
       });
     }
 
@@ -576,7 +560,7 @@
         inquiry.reset();
         closeModal($("#modal-inquiry"));
         showToast("Inquiry sent! We'll get back to you soon.");
-        loadMyTickets(player);
+        loadMyTickets(state.user.id);
       });
     }
 
@@ -723,13 +707,17 @@
     campusTabs($("#admin-progress-tabs"), renderCampusHealth);
   }
 
+  // Everyone who has signed in (except admins), read from the logins by an admin-only function.
   async function loadPlayers() {
-    const { data, error } = await sb.from("players").select("*").order("name", { ascending: true });
+    const { data, error } = await sb.rpc("portal_students");
     if (error) {
-      $("#student-table-body").innerHTML = `<tr><td colspan="5" class="table-msg error">Couldn't load students: ${esc(error.message)}</td></tr>`;
+      $("#student-table-body").innerHTML = `<tr><td colspan="5" class="table-msg error">Couldn't load students. Run <code>sql/portal_security_fixes.sql</code> in Supabase. (${esc(error.message)})</td></tr>`;
       return;
     }
-    admin.players = data || [];
+    admin.players = (data || []).map((r) => ({
+      id: r.user_id, user_id: r.user_id, name: r.name, email: r.email,
+      signed_up: r.signed_up, last_sign_in: r.last_sign_in
+    }));
     renderStudents();
   }
 
@@ -789,11 +777,11 @@
       return `
         <tr data-player="${esc(p.id)}" class="row-click">
           <td><div class="player-col"><div class="avatar-sm-gold${ub ? "" : " avatar-dark-accent"}">${esc(initialsOf(p.name))}</div>
-            <span class="player-name">${esc(p.name || p.username || "—")}</span></div></td>
+            <span class="player-name">${esc(p.name || "—")}</span></div></td>
           <td><div class="email-col"><span class="email-text">${esc(p.email || "—")}</span>
             ${ub ? '<span class="badge-verified-ub">UB Mail</span>' : '<span class="badge-warning-ext">External</span>'}</div></td>
           <td><div class="badge-stack">${badges || '<span class="muted small">Not started</span>'}</div></td>
-          <td><span class="status-dot ${p.active === false ? "inactive" : "active"}" aria-hidden="true"></span>${p.active === false ? "Inactive" : "Active"}</td>
+          <td><span class="muted small">${p.last_sign_in ? esc(timeSince(p.last_sign_in)) : "Never"}</span></td>
           <td class="text-right"><a href="#" class="link-action">View details →</a></td>
         </tr>`;
     }).join("");
@@ -804,9 +792,9 @@
     set("detail-avatar", initialsOf(p.name));
     set("detail-name", p.name || "Unknown");
     set("detail-email", p.email || "—");
-    set("detail-course", p.course || "No course set");
-    set("detail-status-badge", p.active === false ? "Inactive" : "Active");
-    $("#detail-status-badge").className = "status-pill " + (p.active === false ? "status-muted" : "status-active");
+    const ub = isUbMail(p.email);
+    set("detail-course", ub ? "UB Mail" : "External email");
+    $("#detail-course").className = ub ? "badge-verified-ub" : "badge-warning-ext";
     const list = $("#detail-campus-progress");
     if (list) {
       list.innerHTML = CAMPUSES.map((c) => {
@@ -818,8 +806,8 @@
         return `<li><span>${esc(c.name)}</span><span>${value}</span></li>`;
       }).join("");
     }
-    set("detail-level", p.level != null ? p.level : 1);
-    set("detail-xp", Number(p.xp_total || 0).toLocaleString());
+    set("detail-signed-up", p.signed_up ? new Date(p.signed_up).toLocaleDateString() : "—");
+    set("detail-last-seen", p.last_sign_in ? timeSince(p.last_sign_in) : "Never");
     openModal("modal-student-details");
   }
 

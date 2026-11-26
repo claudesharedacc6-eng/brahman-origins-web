@@ -45,7 +45,7 @@ Every campus has a tab on the home page, My Progress and the admin console. Unti
 
 ## Good to know
 
-- **Students** appear in the directory (`players` table) after their first UB Mail sign-in.
+- **Students** appear in the admin directory after their first sign-in. The list comes from the logins themselves (`portal_students()`), not from any group's table. The website never touches the shared `players` table.
 - **Admins who press Play** test the game as a guest, so admin accounts never get game progress.
 - **Character** shows Boy for `character_number` 1 and Girl for 2. That matches Boy being first in the Character Roster.
 - **Never put** the Supabase secret/service_role key, the Google Client Secret, R2 keys, or any password in these files. Everything here is public.

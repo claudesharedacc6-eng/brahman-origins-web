@@ -113,7 +113,7 @@
         </div>
         <div class="admin-card-surface table-wrapper">
           <table class="admin-table" aria-label="Student directory">
-            <thead><tr><th scope="col">Player</th><th scope="col">Email</th><th scope="col">Campus progress</th><th scope="col">Status</th><th scope="col" class="text-right">Action</th></tr></thead>
+            <thead><tr><th scope="col">Player</th><th scope="col">Email</th><th scope="col">Campus progress</th><th scope="col">Last sign-in</th><th scope="col" class="text-right">Action</th></tr></thead>
             <tbody id="student-table-body"><tr><td colspan="5" class="table-msg">Loading students…</td></tr></tbody>
           </table>
           <div class="table-pagination">
@@ -176,8 +176,7 @@
           <h2 id="detail-name" style="margin:0;">Student</h2>
           <div class="muted small" id="detail-email"></div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-            <span class="badge-course" id="detail-course"></span>
-            <span class="status-pill status-active" id="detail-status-badge">Active</span>
+            <span class="badge-verified-ub" id="detail-course"></span>
           </div>
         </div>
       </div>
@@ -186,10 +185,10 @@
         <ul class="campus-progress-list" id="detail-campus-progress"></ul>
       </div>
       <div class="detail-box" style="background:var(--bg-light-gray);border-color:var(--border-color);">
-        <span class="metric-label">Player record</span>
+        <span class="metric-label">Account</span>
         <div class="detail-grid" style="border-top-color:var(--border-color);">
-          <div><span>Level</span><strong id="detail-level">–</strong></div>
-          <div><span>Total XP</span><strong id="detail-xp">–</strong></div>
+          <div><span>Signed up</span><strong id="detail-signed-up">–</strong></div>
+          <div><span>Last sign-in</span><strong id="detail-last-seen">–</strong></div>
         </div>
       </div>
       <button type="button" class="btn btn-primary btn-block" data-close>Close</button>
