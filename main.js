@@ -487,7 +487,12 @@
       if (pill) pill.innerHTML = '<span class="dot-live"></span> Signed in as a tester';
       const main = $("#main");
       if (main) main.insertAdjacentHTML("afterbegin",
-        `<div class="tester-banner"><strong>Tester account.</strong> You can play every minigame and skip them, but nothing is saved online, so your progress here stays empty and you're never on a leaderboard.</div>`);
+        `<div class="tester-banner"><strong>Tester account.</strong> You can play every minigame and skip them, but nothing is saved online, so your progress here stays empty and you're never on a leaderboard.
+          <ul class="tester-keys">
+            <li><kbd>\\</kbd> or the <strong>Win this minigame</strong> button: pass the minigame you're in</li>
+            <li><kbd>\\</kbd> or the <strong>Skip enrollment</strong> button: enroll without a code at the Enrollment Gate</li>
+            <li><kbd>P</kbd> (pause) in the campus: Tester Tools to jump to any year level, enroll, or start over</li>
+          </ul></div>`);
     }
     $$(".js-initials").forEach((el) => { el.textContent = initialsOf(fullName); });
 
