@@ -604,15 +604,19 @@
     let unity = null;
     const base = cfg.BUILD_FOLDER.replace(/\/+$/, "") + "/" + (cfg.BUILD_NAME || "Web");
     const ext = cfg.BUILD_EXT || "";
+    // Version stamp on every game file (e.g. Web.wasm.unityweb?v=1.2.2). A new PRODUCT_VERSION
+    // is a new address, so Cloudflare and the browser can't mix an old file with a new one.
+    // (A new Web.data with an old Web.wasm = keys that don't work and garbled text.)
+    const v = "?v=" + encodeURIComponent(cfg.PRODUCT_VERSION || "1");
     const script = document.createElement("script");
-    script.src = base + ".loader.js";
+    script.src = base + ".loader.js" + v;
     script.crossOrigin = "anonymous"; // so real errors show instead of "Script error."
     script.onerror = () => fail("Couldn't reach the game server. Your network may be blocking it. Try another Wi-Fi or mobile data, then reload.");
     script.onload = () => {
       createUnityInstance($("#unity-canvas"), {
-        dataUrl: base + ".data" + ext,
-        frameworkUrl: base + ".framework.js" + ext,
-        codeUrl: base + ".wasm" + ext,
+        dataUrl: base + ".data" + ext + v,
+        frameworkUrl: base + ".framework.js" + ext + v,
+        codeUrl: base + ".wasm" + ext + v,
         streamingAssetsUrl: cfg.STREAMING_ASSETS,
         companyName: cfg.COMPANY_NAME,
         productName: cfg.PRODUCT_NAME,
