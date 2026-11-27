@@ -616,7 +616,16 @@
         streamingAssetsUrl: cfg.STREAMING_ASSETS,
         companyName: cfg.COMPANY_NAME,
         productName: cfg.PRODUCT_NAME,
-        productVersion: cfg.PRODUCT_VERSION
+        productVersion: cfg.PRODUCT_VERSION,
+        // The browser sometimes refuses to lock the mouse (no click yet, or right after Esc).
+        // That's harmless (the next click locks it), so don't show Unity's error pop-up for it.
+        errorHandler: (message) => {
+          if (/pointer ?lock|NotAllowedError/i.test(String(message))) {
+            console.warn("Mouse lock refused by the browser (harmless):", message);
+            return true; // handled: no pop-up
+          }
+          return false; // any other error: Unity shows it as usual
+        }
       }, (progress) => {
         const pct = Math.round(progress * 100);
         $("#bar-fill").style.width = pct + "%";
@@ -644,6 +653,16 @@
 
     const fs = $("#btn-fullscreen");
     if (fs) fs.addEventListener("click", () => { if (unity) unity.SetFullscreen(1); });
+
+    // Full screen: a quick Esc tap would throw the player out of full screen.
+    // Chrome and Edge let the page keep Esc; the player holds Esc to leave
+    // (the browser shows "Press and hold Esc to exit full screen"). Other browsers: nothing changes.
+    document.addEventListener("fullscreenchange", () => {
+      const kb = navigator.keyboard;
+      if (!kb || !kb.lock) return;
+      if (document.fullscreenElement) kb.lock(["Escape"]).catch(() => {});
+      else kb.unlock();
+    });
   }
 
   /* ------------------------------------------------------------------------
