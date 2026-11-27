@@ -211,9 +211,19 @@
       } catch (e) { /* no profile row yet */ }
     }
 
+    // Tester accounts (listed in portal_testers by the project owner): play like a student,
+    // but the game gets no login token, so nothing is saved online.
+    let isTester = false;
+    if (session && role !== "admin") {
+      try {
+        const { data } = await sb.from("portal_testers").select("user_id").eq("user_id", session.user.id).maybeSingle();
+        isTester = !!data;
+      } catch (e) { /* table not created yet: nobody is a tester */ }
+    }
+
     const email = session ? (session.user.email || "") : "";
     const isAdmin = role === "admin";
-    const isStudent = !!session && !isAdmin && isUbMail(email);
+    const isStudent = !!session && !isAdmin && (isUbMail(email) || isTester);
     const isGuest = !session && sessionStorage.getItem(GUEST_KEY) === "1";
 
     return {
@@ -222,6 +232,7 @@
       email,
       isAdmin,
       isStudent,
+      isTester,
       isGuest,
       canPlay: isStudent || isGuest || isAdmin,
       name: session ? displayName(session.user) : (isGuest ? "Guest" : "")
@@ -252,7 +263,7 @@
     const avatar = $("#nav-avatar");
     const uname = $("#nav-username");
     if (avatar) avatar.textContent = state.isGuest ? "G" : initialsOf(state.name);
-    if (uname) uname.textContent = state.isGuest ? "Guest" : (state.name || "").split(" ")[0];
+    if (uname) uname.textContent = state.isGuest ? "Guest" : (state.name || "").split(" ")[0] + (state.isTester ? " · Tester" : "");
 
     $$("[data-logout]").forEach((btn) => btn.addEventListener("click", () => signOutEverywhere("login.html")));
   }
@@ -326,7 +337,7 @@
     if (welcome && (state.session || state.isGuest)) {
       welcome.textContent = state.isGuest
         ? "Welcome, Guest! 👋"
-        : `Welcome back, ${state.isAdmin ? "" : "UBian "}${(state.name || "").split(" ")[0]}! 👋`;
+        : `Welcome back, ${state.isAdmin || state.isTester ? "" : "UBian "}${(state.name || "").split(" ")[0]}! 👋`;
       welcome.hidden = false;
     }
     campusTabs($("#home-board-tabs"), (campus) => renderLeaderboard($("#home-leaderboard"), campus, 5));
@@ -411,7 +422,7 @@
         if (await routeSignedIn(fresh)) return;
         setLoading(submit, false, "Sign in");
         await sb.auth.signOut();
-        err.textContent = "This account isn't an admin. Students: use the UB Mail button above.";
+        err.textContent = "This account isn't an admin or tester account. Students: use the UB Mail button above.";
         err.classList.add("show");
       });
     }
@@ -470,7 +481,14 @@
     set("student-first-name", fullName.split(" ")[0]);
     set("student-full-name", fullName);
     set("student-email", state.email);
-    set("student-course", "UB Student");
+    set("student-course", state.isTester ? "Tester account" : "UB Student");
+    if (state.isTester) {
+      const pill = $(".status-pill-online");
+      if (pill) pill.innerHTML = '<span class="dot-live"></span> Signed in as a tester';
+      const main = $("#main");
+      if (main) main.insertAdjacentHTML("afterbegin",
+        `<div class="tester-banner"><strong>Tester account.</strong> You can play every minigame and skip them, but nothing is saved online, so your progress here stays empty and you're never on a leaderboard.</div>`);
+    }
     $$(".js-initials").forEach((el) => { el.textContent = initialsOf(fullName); });
 
     // Game progress for every campus that's connected (UB Lipa today).
@@ -579,7 +597,10 @@
     // Students play with their account. Guests, and admins testing, play as guests
     // (the game only saves progress for UB Mail accounts).
     let payload = { mode: "guest", access_token: "", refresh_token: "", user_id: "", name: "Guest", email: "" };
-    if (state.isStudent) {
+    if (state.isTester) {
+      // No tokens on purpose: without them the game can't save anything to Supabase.
+      payload = { mode: "tester", access_token: "", refresh_token: "", user_id: state.user.id, name: state.name, email: state.email };
+    } else if (state.isStudent) {
       payload = {
         mode: "student",
         access_token: state.session.access_token,
@@ -590,7 +611,9 @@
       };
     }
     const who = $("#who-small");
-    if (who) who.textContent = payload.mode === "student" ? `${payload.name} · Student` : (state.isAdmin ? "Admin · testing as guest" : "Guest · Campus tour");
+    if (who) who.textContent = payload.mode === "student" ? `${payload.name} · Student`
+      : payload.mode === "tester" ? `${payload.name} · Tester (not saved)`
+      : (state.isAdmin ? "Admin · testing as guest" : "Guest · Campus tour");
 
     // The game's Exit and Sign out buttons call these (Plugins/WebGL/BrahmanWeb.jslib).
     window.boExitToHome = function () { window.location.href = state.isStudent ? "student.html" : "index.html"; };
