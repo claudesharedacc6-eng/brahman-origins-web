@@ -19,8 +19,8 @@ window.BO_CONFIG = {
   BUILD_EXT: ".unityweb",     // Gzip + Decompression Fallback. Compression Disabled = ""
 
   // Must match Unity: Player Settings > Company Name / Product Name.
-  COMPANY_NAME: "UB Capstone",
+  COMPANY_NAME: "Brahman Origins Team",
   PRODUCT_NAME: "Brahman Origins",
   // Raise this (1.1, 1.2, ...) every time you upload a new build, so players get the new one.
-  PRODUCT_VERSION: "1.2.2"
+  PRODUCT_VERSION: "1.2.3"
 };
